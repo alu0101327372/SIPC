@@ -1,0 +1,55 @@
+{
+  "interactionModel": {
+    "languageModel": {
+      "invocationName": "curiosidades de baloncesto",
+      "intents": [
+        {
+          "name": "AMAZON.CancelIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.HelpIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.StopIntent",
+          "samples": [
+            "para",
+            "termina"
+          ]
+        },
+        {
+          "name": "GetNewFactIntent",
+          "slots": [],
+          "samples": [
+            "dime algo que no sepa de baloncesto",
+            "quiero saber más",
+            "dime algo sobre baloncesto",
+            "quiero que me digas una curiosidad",
+            "dime curiosidades",
+            "quiero saber de baloncesto",
+            "me gustaria saber sobre baloncesto"
+          ]
+        },
+        {
+          "name": "AMAZON.NavigateHomeIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.NoIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.NextIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.YesIntent",
+          "samples": []
+        }
+      ],
+      "types": []
+    }
+  },
+  "version": "6"
+}
