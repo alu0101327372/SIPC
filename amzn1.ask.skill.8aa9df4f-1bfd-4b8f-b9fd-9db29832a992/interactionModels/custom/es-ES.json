@@ -1,0 +1,148 @@
+{
+  "interactionModel": {
+    "languageModel": {
+      "invocationName": "adivina el jugador",
+      "intents": [
+        {
+          "name": "AMAZON.CancelIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.HelpIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.StopIntent",
+          "samples": []
+        },
+        {
+          "name": "AnswerIntent",
+          "slots": [
+            {
+              "name": "player",
+              "type": "Player"
+            }
+          ],
+          "samples": [
+            "la respuesta es {player}",
+            "la respuesta es el {player}",
+            "{player}",
+            "el jugador es {player}",
+            "es {player}",
+            "fue {player}"
+          ]
+        },
+        {
+          "name": "AMAZON.YesIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.NoIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.NextIntent",
+          "samples": [
+            "di me la siguiente",
+            "siguiente cuestión",
+            "siguiente pregunta",
+            "dime la siguiente",
+            "siguiente",
+            "paso palabra",
+            "pasa palabra"
+          ]
+        },
+        {
+          "name": "RepeatIntent",
+          "slots": [],
+          "samples": [
+            "repite de nuevo",
+            "repitemelo",
+            "dime de nuevo",
+            "dime otra vez",
+            "vuelve a decirlo"
+          ]
+        },
+        {
+          "name": "ClueIntent",
+          "slots": [],
+          "samples": [
+            "dame una pista",
+            "dime la pista",
+            "pista",
+            "más información",
+            "qué más se sabe de la pregunta",
+            "pistas"
+          ]
+        },
+        {
+          "name": "AMAZON.NavigateHomeIntent",
+          "samples": []
+        }
+      ],
+      "types": [
+        {
+          "values": [
+            {
+              "name": {
+                "value": "los angeles lakers"
+              }
+            },
+            {
+              "name": {
+                "value": "1946"
+              }
+            },
+            {
+              "name": {
+                "value": "11 equipos"
+              }
+            },
+            {
+              "name": {
+                "value": "Yao Ming"
+              }
+            },
+            {
+              "name": {
+                "value": "stephen curry"
+              }
+            },
+            {
+              "name": {
+                "value": "golden state warriors"
+              }
+            },
+            {
+              "name": {
+                "value": "stephen curry"
+              }
+            },
+            {
+              "name": {
+                "value": "6 anillos"
+              }
+            },
+            {
+              "name": {
+                "value": "phil jackson"
+              }
+            },
+            {
+              "name": {
+                "value": "memphis grizzlies"
+              }
+            },
+            {
+              "name": {
+                "value": "el 8 y el 24"
+              }
+            }
+          ],
+          "name": "Player"
+        }
+      ]
+    }
+  },
+  "version": "14"
+}
