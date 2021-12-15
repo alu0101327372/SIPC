@@ -1,0 +1,55 @@
+{
+  "interactionModel": {
+    "languageModel": {
+      "invocationName": "perfil demo",
+      "intents": [
+        {
+          "name": "AMAZON.NavigateHomeIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.CancelIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.HelpIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.StopIntent",
+          "samples": []
+        },
+        {
+          "name": "GreetMeIntent",
+          "slots": [],
+          "samples": [
+            "nombre",
+            "cual es mi nombre",
+            "dime mi nombre"
+          ]
+        },
+        {
+          "name": "EmailIntent",
+          "slots": [],
+          "samples": [
+            "email",
+            "cual es mi email",
+            "dime mi email"
+          ]
+        },
+        {
+          "name": "MobileIntent",
+          "slots": [],
+          "samples": [
+            "móvil",
+            "número",
+            "cual es mi numero",
+            "dime mi telefono"
+          ]
+        }
+      ],
+      "types": []
+    }
+  },
+  "version": "10"
+}
