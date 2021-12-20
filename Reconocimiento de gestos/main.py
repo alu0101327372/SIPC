@@ -1,115 +1,131 @@
 import numpy as np
 import cv2
 import math
+import imutils
+
+cap = cv2.VideoCapture(0)
+backSub = cv2.createBackgroundSubtractorMOG2(detectShadows = True)
+color_fingers = (0, 255, 255)
+
+if not cap.isOpened:
+  print("Unable to open the cam")
+  exit(0)
+
+# 2 puntos
+pt1 = (400, 100)
+pt2 = (600, 300)
+
+frame_width  = int(cap.get(3))
+frame_height = int(cap.get(4))
+
 
 # Calcula el angulo del defecto de convexidad
 def angle(s,e,f):
-    v1 = [s[0]-f[0],s[1]-f[1]] # desde start hasta f (x con las y)
+    v1 = [s[0]-f[0],s[1]-f[1]]
     v2 = [e[0]-f[0],e[1]-f[1]]
-    ang1 = math.atan2(v1[1],v1[0]) # hacemos al arcotag de cada uno = ver angulos 
+    ang1 = math.atan2(v1[1],v1[0])
     ang2 = math.atan2(v2[1],v2[0])
-    ang = ang1 - ang2 # rectangulos
+    ang = ang1 - ang2
     if (ang > np.pi):
-        ang -= 2*np.pi 
+        ang -= 2*np.pi
     if (ang < -np.pi):
         ang += 2*np.pi
-    return ang*180/np.pi # convertir a grados
-	
+    return ang*180/np.pi
 
-cap = cv2.VideoCapture(0) # cap = videocapture(con el defecto)
-backSub = cv2.createBackgroundSubtractorMOG2(detectShadows = True) # llamada substractor de fondo 
-
-if not cap.isOpened: # si no se ha abierto
-    print ("Unable to open cam")
+learningRate = -1
+while (True):
+  ret,frame=cap.read()
+  if not ret:
     exit(0)
-# 2 puntos
-pt1 = (400,100) # esquina superior izquierda 
-pt2 = (600,300) # esquina inferior derecha
 
-learningRate = -1 # declaramos variable = -1 (defecto)
-while (True): # bucle finito
-    ret,frame=cap.read() # ret y frame = lo leemos 
-    if not ret:
-        exit(0)
+  frame = cv2.flip(frame,1)
+  # Region de interes
+  roi = frame[pt1[1]:pt2[1],pt1[0]:pt2[0],:].copy()
+  cv2.rectangle(frame,pt1,pt2,(255, 0, 0))
+  fgMask = backSub.apply(roi, None, learningRate = lr)
 
-    frame = cv2.flip(frame,1) 
+  kernel = np.ones((5,5),np.uint8)
+  opening = cv2.morphologyEx(fgMask, cv2.MORPH_OPEN, kernel)
 
-    # Region de interes
-    roi = frame[pt1[1]:pt2[1],pt1[0]:pt2[0],:].copy() # 100 a 300  vertical | 400 a 600  horizontal | todos los colores (los tres)
-    cv2.rectangle(frame,pt1,pt2,(255,0,0))  # pintamos el recutangulo = azul borde en la region de interes
+  # Deteccion de contornos
+  contours, hierarchy = cv2.findContours(opening,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)[-2:]
+  if len(contours) > 0:
+    max = -1
+    for i, cnt in enumerate(contours):
+      auxMax = len(cnt)
+      if (max < auxMax):
+        max = auxMax
+        index = i
 
-    fgMask = backSub.apply(roi, None, learningRate) 
-    # para frame nuevo = apply = mascara binaria (0 no aprende) (1 actualizacion mas rapida)
-    # tercer argumento = learning rate = -1
-    # indica el ratio del aprendizaje -> (indica como de rapido olvida lo nuevo que sale (1) y lo integra en el fondo (0))
+      #Encontrar centro
+      M = cv2.moments(cnt)
+      if M["m00"] == 0: M["m00"] = 1
+      x = int(M["m10"]/M["m00"])
+      y = int(M["m01"]/M["m00"])
+      cv2.circle(roi, tuple([x, y]), 5, (0, 255, 0), -1)
+
+      cv2.drawContours(roi, contours, index, (0,255,0))
+    cnt = contours[index]
+
+    # Malla convexa
+    hull = cv2.convexHull(cnt,returnPoints = False)
+    # Defectos de convexidad
+    defects = cv2.convexityDefects(cnt,hull)
+
+    if type(defects) != type(None):
+      beginning = []
+      ending = []
+      fingers = 0
+
+      for i in range(len(defects)):
+        s,e,f,d = defects[i,0]
+        start = tuple(cnt[s][0])
+        end = tuple(cnt[e][0])
+        far = tuple(cnt[f][0])
+        depth = d/256.0
+        #print(depth)
+        ang = angle(start,end,far)
+
+        if np.linalg.norm(cnt[s][0] - cnt[e][0]) > 20 and d > 12000 and ang < 75:
+          beginning.append(start)
+          ending.append(end)
+          cv2.line(roi,start,end,[255,0,0],2) # linea de la malla convexa
+          cv2.circle(roi,far,5,[0,0,255],-1) # circulo del punto mas lejano
 
 
-    # Deteccion de contornos
-    contours, hierarchy = cv2.findContours(fgMask,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)[-2:] # Buscamos los contornos externos, desde los 2 ultimos elementos hasta el final
-    # todos los contornos blanco y negro, rodea los contornos, contorno externo, rango -2 = son los dos ultimos valores
+      #Cuando se levanta un solo dedo
+      if len(beginning) == 0:
+        minY = np.linalg.norm(cnt - [x, y])
+        if minY >= 850:
+          fingers = fingers + 1
+          cv2.putText(roi, '{}'.format(fingers), tuple(cnt), 1, 1, color_fingers, 1, cv2.LINE_AA)
 
-    numero_defecto = 0
-    if len(contours) > 0: # contornos desde (0 a n-1) > 0
-        cont = max(contours,key = len) # contorno mas grande
-        cv2.drawContours(roi, cont, -1, (0,255,0),2) # pintamos la funcion contorno, (todos los contornos), verde, 2 ancho
+      for i in range(len(beginning)):
+        fingers = fingers + 1
+        cv2.putText(roi, '{}'.format(fingers), tuple(beginning[i]), 1, 1, color_fingers, 1, cv2.LINE_AA)
+        if i == len(beginning) - 1:
+          fingers = fingers + 1
+          cv2.putText(roi, '{}'.format(fingers), tuple(ending[i]), 1, 1, color_fingers, 1, cv2.LINE_AA)
+      cv2.putText(frame, '{}'.format(fingers), (390, 45), 1, 4, (color_fingers), 2, cv2.LINE_AA)
+      rect = cv2.boundingRect(cnt)
+      pt1_ = (rect[0],rect[1])
+      pt2_ = (rect[0]+rect[2],rect[1]+rect[3])
+      cv2.rectangle(roi,pt1_,pt2_,(0,0,255),3)
 
-        # Bounding rect
-        x,y,a,h = cv2.boundingRect(cont) # x,y = punto esquina superior izq, a:ancho, h:alto
 
-        cv2.rectangle(roi,(x,y),(x+a, y+h),(0,0,255),2) # azul 
-        # (x,y) = (rect[0],rect[1])
-        # (x+a, y+h) = (rect[0]+rect[2],rect[1]+rect[3]) 
+# Mostrar ventanas
+  cv2.imshow('frame', frame) # ventana frame
+  cv2.imshow('ROI', roi) # ventana interes
+  cv2.imshow('FgMask', fgMask) # ventana mascara binaria
 
-        # Malla convexa
-        hull = cv2.convexHull(cont,returnPoints = False) # hull = almacene en los indice (no los puntos de si mismo)
-        # Defectos de convexidad
-        defects = cv2.convexityDefects(cont,hull) # = le pasamos los contornos y los indices
- 
-        if type(defects) != type(None): # si hay defectos
-            numero_defecto = 0
-            for i in range(defects.shape[0]): # Guardamos los defectos
-                s,e,f,d = defects[i,0] # indices en defects
-                start = tuple(cont[s][0]) # tupla del contorno + indexar (vector de puntos)
-                end = tuple(cont[e][0])
-                far = tuple(cont[f][0])
-                depth = d/256.0
-                ang = angle(start,end,far)  # angulo
-                
-                if depth > 30 and ang <= 90:
-                    numero_defecto += 1
-                    cv2.line(roi,start,end,[255,0,0],2) # linea de la malla convexa
-                    cv2.circle(roi,far,5,[0,0,255],-1) # circulo del punto mas lejano
-            
-            # Número de dedos -> defectos obtenidos y alturas del bounding rect
-            font = cv2.FONT_HERSHEY_COMPLEX
-            color_blanco = (255, 255, 255) 
-            
-            if numero_defecto >= 1: # a > 110 and h > 140
-                cv2.putText(frame, " Numero dedos: " + str(numero_defecto+1), (0,50), font, 1, color_blanco, 2)
-                
+  keyboard = cv2.waitKey(10)
+  if keyboard & 0xFF == ord('d'):
+    lr = 0
 
-            elif h <= 140: # h <= 140 
-                cv2.putText(frame, " Numero dedos: 0", (0,50), font, 1, color_blanco, 2)
+  keyboard = cv2.waitKey(40)
+  if keyboard & 0xFF == ord('q'):
+    break
 
-            else: # entre a > 95 y h > 130 
-                cv2.putText(frame, " Numero dedos: 1", (0,50), font, 1, color_blanco, 2)
-                if a > 95 and h > 130:
-                    cv2.putText(frame, " Viva los unos!!", (0,100), font, 1, color_blanco, 2)
-
-    # Mostrar ventanas
-    cv2.imshow('Frame',frame) # ventana frame
-    cv2.imshow('ROI',roi) # ventana interes
-    cv2.imshow('FG Mask',fgMask) # ventana mascara binaria
-
-    keyboard = cv2.waitKey(1) # 1 milesegundo con el "keyboard"
-    if keyboard & 0xFF == ord('q'): # q = salir
-        break
-    elif keyboard == ord('r'): # r = learning rate 0
-        learningRate = 0
-
-        # negro = fondo
-        # blanco = cambios (nuevo)
-        
-# Todos los recursos + cámara
+# Liberar todos los recursos + cámara
 cap.release()
 cv2.destroyAllWindows()
