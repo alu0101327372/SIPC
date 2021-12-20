@@ -110,13 +110,11 @@ while True:
   cv2.imshow('ROI', roi) # ventana interes
   cv2.imshow('FgMask', fgMask) # ventana mascara binaria
 
-  keyboard = cv2.waitKey(10)
-  if keyboard & 0xFF == ord('d'):
-    lr = 0
-
-  keyboard = cv2.waitKey(40)
-  if keyboard & 0xFF == ord('q'):
-    break
+  keyboard = cv2.waitKey(1) # 1 milesegundo con el "keyboard"
+  if keyboard & 0xFF == ord('q'): # q = salir
+      break
+  elif keyboard == ord('r'): # r = learning rate 0
+      learningRate = 0
 
 # Liberar todos los recursos + cámara
 cap.release()
