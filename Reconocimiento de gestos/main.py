@@ -3,22 +3,6 @@ import cv2
 import math
 import imutils
 
-cap = cv2.VideoCapture(0)
-backSub = cv2.createBackgroundSubtractorMOG2(detectShadows = True)
-color_fingers = (0, 255, 255)
-
-if not cap.isOpened:
-  print("Unable to open the cam")
-  exit(0)
-
-# 2 puntos
-pt1 = (400, 100)
-pt2 = (600, 300)
-
-frame_width  = int(cap.get(3))
-frame_height = int(cap.get(4))
-
-
 # Calcula el angulo del defecto de convexidad
 def angle(s,e,f):
     v1 = [s[0]-f[0],s[1]-f[1]]
@@ -32,17 +16,31 @@ def angle(s,e,f):
         ang += 2*np.pi
     return ang*180/np.pi
 
+cap = cv2.VideoCapture(0)
+backSub = cv2.createBackgroundSubtractorMOG2(detectShadows = True)
+
+if not cap.isOpened:
+  print("Unable to open the cam")
+  exit(0)
+
+# 2 puntos
+pt1 = (400,100) # esquina superior izquierda 
+pt2 = (600,300) # esquina inferior derecha
+
+frame_width  = int(cap.get(3))
+frame_height = int(cap.get(4))
+
 learningRate = -1
-while (True):
+while True:
   ret,frame=cap.read()
   if not ret:
     exit(0)
 
-  frame = cv2.flip(frame,1)
+  frame = cv2.flip(frame, 1)
   # Region de interes
   roi = frame[pt1[1]:pt2[1],pt1[0]:pt2[0],:].copy()
-  cv2.rectangle(frame,pt1,pt2,(255, 0, 0))
-  fgMask = backSub.apply(roi, None, learningRate = lr)
+  cv2.rectangle(frame,pt1,pt2,(255, 255, 0))
+  fgMask = backSub.apply(roi, None, learningRate)
 
   kernel = np.ones((5,5),np.uint8)
   opening = cv2.morphologyEx(fgMask, cv2.MORPH_OPEN, kernel)
@@ -63,14 +61,12 @@ while (True):
       x = int(M["m10"]/M["m00"])
       y = int(M["m01"]/M["m00"])
       cv2.circle(roi, tuple([x, y]), 5, (0, 255, 0), -1)
-
+    # Malla convexa
       cv2.drawContours(roi, contours, index, (0,255,0))
     cnt = contours[index]
-
-    # Malla convexa
     hull = cv2.convexHull(cnt,returnPoints = False)
     # Defectos de convexidad
-    defects = cv2.convexityDefects(cnt,hull)
+    defects = cv2.convexityDefects(cnt, hull)
 
     if type(defects) != type(None):
       beginning = []
@@ -82,8 +78,7 @@ while (True):
         start = tuple(cnt[s][0])
         end = tuple(cnt[e][0])
         far = tuple(cnt[f][0])
-        depth = d/256.0
-        #print(depth)
+        depth = d / 256.0
         ang = angle(start,end,far)
 
         if np.linalg.norm(cnt[s][0] - cnt[e][0]) > 20 and d > 12000 and ang < 75:
@@ -98,15 +93,12 @@ while (True):
         minY = np.linalg.norm(cnt - [x, y])
         if minY >= 850:
           fingers = fingers + 1
-          cv2.putText(roi, '{}'.format(fingers), tuple(cnt), 1, 1, color_fingers, 1, cv2.LINE_AA)
 
       for i in range(len(beginning)):
         fingers = fingers + 1
-        cv2.putText(roi, '{}'.format(fingers), tuple(beginning[i]), 1, 1, color_fingers, 1, cv2.LINE_AA)
         if i == len(beginning) - 1:
           fingers = fingers + 1
-          cv2.putText(roi, '{}'.format(fingers), tuple(ending[i]), 1, 1, color_fingers, 1, cv2.LINE_AA)
-      cv2.putText(frame, '{}'.format(fingers), (390, 45), 1, 4, (color_fingers), 2, cv2.LINE_AA)
+      cv2.putText(frame, '{}'.format(fingers), (390, 45), 1, 4, (255, 255, 255), 2, cv2.LINE_AA)
       rect = cv2.boundingRect(cnt)
       pt1_ = (rect[0],rect[1])
       pt2_ = (rect[0]+rect[2],rect[1]+rect[3])
