@@ -82,7 +82,7 @@ while (True):
         cv2.rectangle(roi, p1, p2, (0, 0, 255), 3)
 
         ## Hallamos el punto medio del bounding rect, y damos un valor inicial a la variable que almacenara el punto mas alto.
-        pmedio = ((p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2)
+        pmedio = (int((p1[0] + p2[0]) / 2), int((p1[1] + p2[1]) / 2))
         higherPoint = pmedio
 
         # Comprobamos que hayan defectos de convexidad inicializados para poder trabajar con ellos y los hallamos

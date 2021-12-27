@@ -27,6 +27,10 @@ if not cap.isOpened:
 pt1 = (400,100) # esquina superior izquierda 
 pt2 = (600,300) # esquina inferior derecha
 
+# Variables a inicializar para usar dentro del bucle
+isDrawing = False
+drawing = []
+
 frame_width  = int(cap.get(3))
 frame_height = int(cap.get(4))
 
@@ -115,6 +119,12 @@ while True:
       break
   elif keyboard == ord('r'): # r = learning rate 0
       learningRate = 0
+  elif keyboard & 0xFF == ord('d'):
+      if not isDrawing:
+        isDrawing = True
+      else:
+        isDrawing = False
+        drawing = []
 
 # Liberar todos los recursos + cámara
 cap.release()
